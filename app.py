@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
 
 # 1. Judul Aplikasi
 st.title("Aplikasi Prediksi Churn Pelanggan Telco")
@@ -82,4 +83,5 @@ else:
     st.error("Model TETAP tidak ditemukan di daftar file di atas.")
 
         
+
 
