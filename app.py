@@ -15,12 +15,16 @@ st.write("Daftar file yang terbaca oleh Streamlit:", os.listdir('.'))
 # Coba muat model
 nama_file = 'model_churn_rf.pkl'
 
-if os.path.exists('model_churn_rf.pkl'):
-    model = joblib.load('model_churn_rf.pkl') 
-    st.success("Berhasil: Model ditemukan dan dimuat!")
+if os.path.exists(nama_file):
+    try:
+        with open(nama_file, 'rb') as f:
+            model = pickle.load(f)
+        st.success("Berhasil: Model dimuat menggunakan Pickle!")
+    except Exception as e:
+        st.error(f"Gagal memuat model: {e}")
 else:
-    st.error(f"Gagal: File {'model_churn_rf.pkl'} TIDAK ADA di folder GitHub kamu.")
-
+    st.error(f"Gagal: File {nama_file} tidak ditemukan.")
+    
 st.divider()
 
 # 3. Input Data Pelanggan (Sesuaikan dengan fitur saat training)
@@ -75,6 +79,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
