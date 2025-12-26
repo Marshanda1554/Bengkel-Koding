@@ -62,4 +62,15 @@ if st.button("Cek Prediksi"):
             st.success("HASIL: Pelanggan diprediksi akan STAY (Tetap)")
     except Exception as e:
         st.error(f"Terjadi kesalahan saat prediksi: {e}")
+
+
+# Kode Detektif untuk cek file
+st.write("Daftar file yang ditemukan oleh Streamlit:", os.listdir('.'))
+
+if os.path.exists('model_churn_rf.pkl'):
+    model = joblib.load('model_churn_rf.pkl')
+    st.success("Model berhasil dimuat!")
+else:
+    st.error("Model TETAP tidak ditemukan di daftar file di atas.")
+
         
