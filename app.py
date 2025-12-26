@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 import os
 import pickle
+import dill
 
 # 1. Judul Aplikasi
 st.title("Aplikasi Prediksi Churn Pelanggan Telco")
@@ -78,6 +79,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
