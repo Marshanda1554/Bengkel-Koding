@@ -3,63 +3,49 @@ import pandas as pd
 import joblib
 import os
 
-# 1. Judul
 st.title("Aplikasi Prediksi Churn")
-st.write("Masukkan data pelanggan untuk melihat prediksi.")
 
-# 2. Load Model
+# 1. Load Model
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
         model = joblib.load(model_path)
-        st.success("Model Berhasil Dimuat!")
+        st.success("✅ Model Berhasil Dimuat!")
     except Exception as e:
-        st.error(f"Gagal memuat model: {e}")
+        st.error(f"❌ Gagal memuat model: {e}")
         st.stop()
 else:
-    st.error("File model_churn_rf.pkl tidak ditemukan di GitHub!")
+    st.error("File model tidak ditemukan!")
     st.stop()
 
-# 3. Input Data
+# 2. Input Sederhana
 st.divider()
 tenure = st.number_input("Tenure (Bulan)", 0, 100, 12)
-monthly_charges = st.number_input("Monthly Charges", 0.0, 500.0, 50.0)
-total_charges = st.number_input("Total Charges", 0.0, 10000.0, 500.0)
+monthly = st.number_input("Monthly Charges", 0.0, 500.0, 50.0)
+total = st.number_input("Total Charges", 0.0, 10000.0, 500.0)
 
-# 4. Tombol Prediksi
+# 3. Tombol Prediksi
 if st.button("Prediksi Sekarang"):
     try:
-        # Membuat data input dengan jumlah kolom yang sesuai (misal 20)
-        # Sesuai instruksi sebelumnya, kita isi dengan angka nol sebagai dasar
-        df_input = pd.DataFrame([[0] * 20]) 
+        # Cek jumlah fitur yang diminta model
+        n_features = model.n_features_in_
+        st.info(f"Info: Model kamu ternyata meminta {n_features} kolom.")
         
-        # Isi posisi kolom tenure, monthly, dan total
-        # (Indeks 4, 18, 19 adalah standar fitur Telco Churn)
-        df_input.iloc[0, 4] = tenure
-        df_input.iloc[0, 18] = monthly_charges
-        df_input.iloc[0, 19] = total_charges
+        # Buat data input sesuai jumlah yang diminta model
+        df_input = pd.DataFrame([[0] * n_features])
         
-        # Eksekusi Prediksi
+        # Mengisi kolom (kita coba isi di beberapa posisi umum)
+        if n_features >= 19:
+            df_input.iloc[0, 4] = tenure
+            df_input.iloc[0, n_features-2] = monthly
+            df_input.iloc[0, n_features-1] = total
+        
         prediction = model.predict(df_input)
         
-        st.subheader("Hasil Analisis:")
         if prediction[0] == 'Yes' or prediction[0] == 1:
-            st.error("⚠️ Pelanggan diprediksi akan CHURN (Berhenti)")
+            st.error("⚠️ Hasil: Pelanggan diprediksi CHURN")
         else:
-            st.success("✅ Pelanggan diprediksi akan STAY (Bertahan)")
+            st.success("✅ Hasil: Pelanggan diprediksi STAY")
             
     except Exception as e:
-        st.warning(f"Terjadi penyesuaian data: {e}")
-        # Jika error karena jumlah kolom bukan 20, coba otomatis pakai 19
-        try:
-            df_input_alt = pd.DataFrame([[0] * 19])
-            df_input_alt.iloc[0, 4] = tenure
-            df_input_alt.iloc[0, 17] = monthly_charges
-            df_input_alt.iloc[0, 18] = total_charges
-            prediction = model.predict(df_input_alt)
-            if prediction[0] == 'Yes' or prediction[0] == 1:
-                st.error("⚠️ Pelanggan diprediksi akan CHURN (Berhenti)")
-            else:
-                st.success("✅ Pelanggan diprediksi akan STAY (Bertahan)")
-        except Exception as e2:
-            st.error(f"Gagal total: {e2}")
+        st.error(f"Terjadi kesalahan teknis: {e}")
