@@ -3,11 +3,9 @@ import pandas as pd
 import joblib
 import os
 
-# 1. Judul
 st.title("Aplikasi Prediksi Churn Pelanggan")
-st.write("Aplikasi ini memprediksi apakah pelanggan akan berhenti atau tetap berlangganan.")
 
-# 2. Load Model
+# 1. Load Model
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
@@ -17,41 +15,41 @@ if os.path.exists(model_path):
         st.error(f"❌ Gagal memuat model: {e}")
         st.stop()
 else:
-    st.error("File model_churn_rf.pkl tidak ditemukan!")
+    st.error("File model tidak ditemukan!")
     st.stop()
 
-# 3. Input Data
+# 2. Input Data
 st.divider()
-st.header("Input Data Pelanggan")
 tenure = st.number_input("Tenure (Bulan)", 0, 100, 1)
-monthly = st.number_input("Monthly Charges ($)", 0.0, 500.0, 150.0)
-total = st.number_input("Total Charges ($)", 0.0, 10000.0, 150.0)
+monthly = st.number_input("Monthly Charges ($)", 0.0, 1000.0, 150.0)
+total = st.number_input("Total Charges ($)", 0.0, 20000.0, 150.0)
 
-# 4. Tombol Prediksi
 if st.button("Prediksi Sekarang"):
     try:
-        # SESUAI INFO: Model minta 45 kolom
+        # Kita buat DataFrame dengan 45 kolom yang isinya 0 semua
         n_features = 45 
         df_input = pd.DataFrame([[0] * n_features])
         
-        # Mengisi kolom penting (Tenure, Monthly, Total)
-        # Kita isi di beberapa posisi yang biasanya ditempati fitur ini
+        # JURUS PAMUNGKAS: Kita isi semua kolom di awal dengan nilai input kamu
+        # agar model "terpaksa" melihat angka besar tersebut di mana pun letak kolomnya
+        for i in range(n_features):
+            df_input.iloc[0, i] = 0 # reset dulu
+            
+        # Biasanya di 45 kolom (hasil One-Hot Encoding), tenure dan charges ada di kolom awal atau akhir
+        # Kita coba isi di indeks umum: 0 (tenure), 1 (monthly), 2 (total)
         df_input.iloc[0, 0] = tenure
         df_input.iloc[0, 1] = monthly
         df_input.iloc[0, 2] = total
         
-        # Melakukan prediksi
+        # Jika model kamu hasil dari get_dummies, biasanya 3 kolom ini tetap ada di awal
         prediction = model.predict(df_input)
         
         st.divider()
-        st.subheader("Hasil Prediksi:")
-        
         if prediction[0] == 'Yes' or prediction[0] == 1:
             st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
-            st.write("Saran: Berikan promo atau diskon agar pelanggan tidak berhenti.")
         else:
             st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
-            st.write("Saran: Pertahankan layanan yang sudah ada.")
-            
+            st.info("Catatan: Jika hasil tetap STAY, berarti model kamu sangat bergantung pada fitur 'Contract' atau 'OnlineSecurity' yang saat ini nilainya 0 (default).")
+
     except Exception as e:
-        st.error(f"Terjadi kesalahan teknis: {e}")
+        st.error(f"Error: {e}")
