@@ -7,10 +7,18 @@ st.title("Aplikasi Prediksi Churn Pelanggan Telco")
 st.write("Dibuat oleh: Marshanda Putri Salsabila")
 
 # 2. Load Model yang sudah didownload
-try:
-    model = joblib.load('model_churn_rf.pkl')
-except:
-    st.error("File model_churn_rf.pkl tidak ditemukan. Pastikan sudah diupload ke GitHub.")
+# Kode untuk melacak file
+st.write("Lokasi folder saat ini:", os.getcwd())
+st.write("Daftar file yang terbaca oleh Streamlit:", os.listdir('.'))
+
+# Coba muat model
+nama_file = 'model_churn_rf.pkl'
+
+if os.path.exists(nama_file):
+    model = joblib.load(nama_file)
+    st.success("Berhasil: Model ditemukan dan dimuat!")
+else:
+    st.error(f"Gagal: File {nama_file} TIDAK ADA di folder GitHub kamu.")
 
 st.divider()
 
@@ -74,3 +82,4 @@ else:
     st.error("Model TETAP tidak ditemukan di daftar file di atas.")
 
         
+
