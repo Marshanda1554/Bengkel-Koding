@@ -15,11 +15,11 @@ st.write("Daftar file yang terbaca oleh Streamlit:", os.listdir('.'))
 # Coba muat model
 nama_file = 'model_churn_rf.pkl'
 
-if os.path.exists(nama_file):
-    model = joblib.load(model_churn_rf.pkl)
+if os.path.exists('model_churn_rf.pkl'):
+    model = joblib.load('model_churn_rf.pkl') 
     st.success("Berhasil: Model ditemukan dan dimuat!")
 else:
-    st.error(f"Gagal: File {model_churn_rf.pkl} TIDAK ADA di folder GitHub kamu.")
+    st.error(f"Gagal: File {'model_churn_rf.pkl'} TIDAK ADA di folder GitHub kamu.")
 
 st.divider()
 
@@ -75,6 +75,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
