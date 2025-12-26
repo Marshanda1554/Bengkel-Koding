@@ -1,91 +1,32 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import os
-import pickle
-import dill
 
-# 1. Judul Aplikasi
-st.title("Aplikasi Prediksi Churn Pelanggan Telco")
-st.write("Dibuat oleh: Marshanda Putri Salsabila")
+# Load Model
+model = joblib.load('model_churn_rf.pkl')
 
-# 2. Load Model yang sudah didownload
-# Kode untuk melacak file
-st.write("Lokasi folder saat ini:", os.getcwd())
-st.write("Daftar file yang terbaca oleh Streamlit:", os.listdir('.'))
+st.title("Prediksi Churn Pelanggan")
+st.write("Masukkan data pelanggan untuk prediksi.")
 
-# Coba muat model
-nama_file = 'model_churn_rf.pkl'
+# Input Sederhana
+tenure = st.number_input("Tenure (Bulan)", 0, 100, 12)
+monthly_charges = st.number_input("Monthly Charges", 0.0, 500.0, 50.0)
+total_charges = st.number_input("Total Charges", 0.0, 10000.0, 500.0)
 
-if os.path.exists(nama_file):
-    try:
-        model = joblib.load(nama_file)
-        st.success("Berhasil: Model dimuat!")
-    except Exception as e:
-        st.error(f"Gagal memuat model: {e}")
+# Karena model kamu butuh banyak kolom, kita isi kolom lainnya dengan nilai default
+if st.button("Prediksi"):
+    input_df = pd.DataFrame([{
+        'gender': 'Male', 'SeniorCitizen': 0, 'Partner': 'No', 'Dependents': 'No',
+        'tenure': tenure, 'PhoneService': 'Yes', 'MultipleLines': 'No',
+        'InternetService': 'DSL', 'OnlineSecurity': 'No', 'OnlineBackup': 'No',
+        'DeviceProtection': 'No', 'TechSupport': 'No', 'StreamingTV': 'No',
+        'StreamingMovies': 'No', 'Contract': 'Month-to-month', 'PaperlessBilling': 'No',
+        'PaymentMethod': 'Electronic check', 'MonthlyCharges': monthly_charges,
+        'TotalCharges': total_charges
+    }])
     
-st.divider()
-
-# 3. Input Data Pelanggan (Sesuaikan dengan fitur saat training)
-st.header("Input Data Pelanggan")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    senior = st.selectbox("Senior Citizen", [0, 1])
-    partner = st.selectbox("Partner", ["Yes", "No"])
-    dependents = st.selectbox("Dependents", ["Yes", "No"])
-    tenure = st.slider("Tenure (Bulan)", 0, 72, 12)
-
-with col2:
-    contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-    paperless = st.selectbox("Paperless Billing", ["Yes", "No"])
-    payment = st.selectbox("Payment Method", ["Electronic check", "Mailed check", "Bank transfer", "Credit card"])
-    monthly = st.number_input("Monthly Charges ($)", min_value=0.0, value=50.0)
-    total = st.number_input("Total Charges ($)", min_value=0.0, value=500.0)
-
-# 4. Tombol Prediksi
-if st.button("Cek Prediksi"):
-    # Buat DataFrame dari input user
-    data = pd.DataFrame({
-        'gender': [gender],
-        'SeniorCitizen': [senior],
-        'Partner': [partner],
-        'Dependents': [dependents],
-        'tenure': [tenure],
-        'Contract': [contract],
-        'PaperlessBilling': [paperless],
-        'PaymentMethod': [payment],
-        'MonthlyCharges': [monthly],
-        'TotalCharges': [total]
-    })
-    
-    # Tambahkan kolom lain yang ada saat training dengan nilai default (misal Service dll)
-    # Ini penting agar jumlah kolom input sama dengan saat training model
-    # (Catatan: Tambahkan kolom lain sesuai struktur X_train kamu)
-
-    try:
-        prediction = model.predict(data)
-        
-        if prediction[0] == 'Yes':
-            st.error("HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
-        else:
-            st.success("HASIL: Pelanggan diprediksi akan STAY (Tetap)")
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat prediksi: {e}")
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
+    res = model.predict(input_df)
+    if res[0] == 'Yes':
+        st.error("Pelanggan akan Churn")
+    else:
+        st.success("Pelanggan tetap bertahan")
