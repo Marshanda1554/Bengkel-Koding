@@ -19,8 +19,8 @@ nama_file = 'model_churn_rf.pkl'
 if os.path.exists(nama_file):
     try:
         with open(nama_file, 'rb') as f:
-            model = pickle.load(f)
-        st.success("Berhasil: Model dimuat!")
+            model = dill.load(f) # Gunakan dill.load
+        st.success("Berhasil: Model dimuat dengan DILL!")
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
     
@@ -78,6 +78,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
