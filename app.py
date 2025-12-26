@@ -20,11 +20,9 @@ if os.path.exists(nama_file):
     try:
         with open(nama_file, 'rb') as f:
             model = pickle.load(f)
-        st.success("Berhasil: Model dimuat menggunakan Pickle!")
+        st.success("Berhasil: Model dimuat!")
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
-else:
-    st.error(f"Gagal: File {nama_file} tidak ditemukan.")
     
 st.divider()
 
@@ -80,6 +78,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
