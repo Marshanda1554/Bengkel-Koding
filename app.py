@@ -19,9 +19,8 @@ nama_file = 'model_churn_rf.pkl'
 
 if os.path.exists(nama_file):
     try:
-        with open(nama_file, 'rb') as f:
-            model = dill.load(f) # Gunakan dill.load
-        st.success("Berhasil: Model dimuat dengan DILL!")
+        model = joblib.load(nama_file)
+        st.success("Berhasil: Model dimuat!")
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
     
@@ -79,6 +78,7 @@ if st.button("Cek Prediksi"):
 
 
         
+
 
 
 
