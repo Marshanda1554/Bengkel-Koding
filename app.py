@@ -1,27 +1,27 @@
 import streamlit as st
 import pandas as pd
-import dill
+import pickle
 import os
 
-# 1. Judul & Konfigurasi
+# 1. Konfigurasi Halaman
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 st.title("📊 Telco Customer Churn Prediction")
 
-# 2. Load Model menggunakan DILL (Sesuai cell terakhir notebook kamu)
+# 2. Load Model menggunakan Pickle Standar
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
         with open(model_path, 'rb') as f:
-            model = dill.load(f)
-        st.success("✅ Model Pipeline (Dill) Berhasil Dimuat!")
+            model = pickle.load(f)
+        st.success("✅ Model Berhasil Dimuat!")
     except Exception as e:
-        st.error(f"Gagal memuat model: {e}")
+        st.error(f"❌ Gagal memuat model: {e}")
         st.stop()
 else:
     st.error(f"⚠️ File '{model_path}' tidak ditemukan.")
     st.stop()
 
-# 3. Form Input Data
+# 3. Form Input (Urutan harus persis sesuai dataset training)
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
 
@@ -32,7 +32,7 @@ with col1:
     SeniorCitizen = st.selectbox("SeniorCitizen", [0, 1])
     Partner = st.selectbox("Partner", ["Yes", "No"])
     Dependents = st.selectbox("Dependents", ["No", "Yes"])
-    tenure = st.number_input("tenure", min_value=0, max_value=72, value=1)
+    tenure = st.number_input("tenure", min_value=0, max_value=100, value=1)
 
 with col2:
     PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
@@ -49,39 +49,26 @@ with col3:
     Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
     PaperlessBilling = st.selectbox("PaperlessBilling", ["Yes", "No"])
     PaymentMethod = st.selectbox("PaymentMethod", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
-    MonthlyCharges = st.number_input("MonthlyCharges", value=100.0)
-    TotalCharges = st.number_input("TotalCharges", value=100.0)
+    MonthlyCharges = st.number_input("MonthlyCharges", value=70.0)
+    TotalCharges = st.number_input("TotalCharges", value=70.0)
 
-# 4. Logika Prediksi
+# 4. Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # URUTAN KOLOM INI ADALAH KUNCI (Harus sesuai df_clean tanpa customerID & Churn)
-        # Jangan mengubah urutan di bawah ini!
+        # Menyesuaikan input ke DataFrame
         input_dict = {
-            'gender': gender,
-            'SeniorCitizen': SeniorCitizen,
-            'Partner': Partner,
-            'Dependents': Dependents,
-            'tenure': tenure,
-            'PhoneService': PhoneService,
-            'MultipleLines': MultipleLines,
-            'InternetService': InternetService,
-            'OnlineSecurity': OnlineSecurity,
-            'OnlineBackup': OnlineBackup,
-            'DeviceProtection': DeviceProtection,
-            'TechSupport': TechSupport,
-            'StreamingTV': StreamingTV,
-            'StreamingMovies': StreamingMovies,
-            'Contract': Contract,
-            'PaperlessBilling': PaperlessBilling,
-            'PaymentMethod': PaymentMethod,
-            'MonthlyCharges': MonthlyCharges,
+            'gender': gender, 'SeniorCitizen': SeniorCitizen, 'Partner': Partner,
+            'Dependents': Dependents, 'tenure': tenure, 'PhoneService': PhoneService,
+            'MultipleLines': MultipleLines, 'InternetService': InternetService,
+            'OnlineSecurity': OnlineSecurity, 'OnlineBackup': OnlineBackup,
+            'DeviceProtection': DeviceProtection, 'TechSupport': TechSupport,
+            'StreamingTV': StreamingTV, 'StreamingMovies': StreamingMovies,
+            'Contract': Contract, 'PaperlessBilling': PaperlessBilling,
+            'PaymentMethod': PaymentMethod, 'MonthlyCharges': MonthlyCharges,
             'TotalCharges': TotalCharges
         }
-        
         input_df = pd.DataFrame([input_dict])
 
-        # Prediksi (Pipeline otomatis mengarahkan mana yang di-scale dan mana yang di-encode)
         prediction = model.predict(input_df)
         
         st.divider()
@@ -91,8 +78,5 @@ if st.button("🚀 Prediksi Sekarang"):
             st.success("✅ HASIL: Pelanggan diprediksi akan STAY")
             
     except Exception as e:
-        st.error(f"Terjadi kesalahan: {e}")
-        st.info("Saran: Jika error string to float muncul, artinya urutan kolom input_df tidak sesuai dengan preprocessor model.")
-
-st.divider()
-st.caption("A11.2022.14816 - Marshanda Putri Salsabila")
+        st.error(f"Kesalahan Prediksi: {e}")
+        
