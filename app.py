@@ -3,92 +3,96 @@ import pandas as pd
 import joblib
 import os
 
-# 1. Konfigurasi Halaman
+# 1. Judul & Konfigurasi
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
-st.title("📊 Aplikasi Prediksi Churn Pelanggan")
-st.write("Aplikasi ini menggunakan model Pipeline yang sudah divalidasi dengan Cross-Validation.")
+st.title("📊 Telco Customer Churn Prediction")
 
-# 2. Load Model (Pastikan model yang disimpan adalah Pipeline 'best_rf_model')
+# 2. Load Model
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
+        # Gunakan model pipeline yang sudah kamu simpan di notebook
         model = joblib.load(model_path)
         st.success("✅ Model Pipeline Berhasil Dimuat!")
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
         st.stop()
 else:
-    st.error("⚠️ File 'model_churn_rf.pkl' tidak ditemukan.")
+    st.error(f"⚠️ File '{model_path}' tidak ditemukan.")
     st.stop()
 
-# 3. Form Input Data (Dibuat lengkap agar model tidak bingung)
+# 3. Form Input Data (Urutan disesuaikan dengan dataset asli)
 st.divider()
-st.subheader("📝 Masukkan Data Pelanggan")
+st.header("📝 Masukkan Data Pelanggan")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    tenure = st.number_input("Tenure (Bulan)", min_value=1, max_value=72, value=1)
-    monthly = st.number_input("Monthly Charges ($)", min_value=18.0, max_value=120.0, value=100.0)
-    total = st.number_input("Total Charges ($)", min_value=18.0, max_value=9000.0, value=100.0)
-    gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
+    gender = st.selectbox("gender", ["Female", "Male"])
+    SeniorCitizen = st.selectbox("SeniorCitizen", [0, 1])
+    Partner = st.selectbox("Partner", ["Yes", "No"])
+    Dependents = st.selectbox("Dependents", ["No", "Yes"])
+    tenure = st.number_input("tenure", min_value=1, max_value=72, value=1)
 
 with col2:
-    contract = st.selectbox("Jenis Kontrak", ["Month-to-month", "One year", "Two year"])
-    internet = st.selectbox("Internet Service", ["Fiber optic", "DSL", "No"])
-    security = st.selectbox("Online Security", ["No", "Yes", "No internet service"])
-    tech_support = st.selectbox("Tech Support", ["No", "Yes", "No internet service"])
+    PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
+    MultipleLines = st.selectbox("MultipleLines", ["No phone service", "No", "Yes"])
+    InternetService = st.selectbox("InternetService", ["DSL", "Fiber optic", "No"])
+    OnlineSecurity = st.selectbox("OnlineSecurity", ["No", "Yes", "No internet service"])
+    OnlineBackup = st.selectbox("OnlineBackup", ["Yes", "No", "No internet service"])
+    DeviceProtection = st.selectbox("DeviceProtection", ["No", "Yes", "No internet service"])
 
 with col3:
-    senior = st.selectbox("Senior Citizen (Lansia)", [0, 1])
-    partner = st.selectbox("Memiliki Pasangan", ["No", "Yes"])
-    dependents = st.selectbox("Memiliki Tanggungan", ["No", "Yes"])
-    billing = st.selectbox("Paperless Billing", ["Yes", "No"])
+    TechSupport = st.selectbox("TechSupport", ["No", "Yes", "No internet service"])
+    StreamingTV = st.selectbox("StreamingTV", ["No", "Yes", "No internet service"])
+    StreamingMovies = st.selectbox("StreamingMovies", ["No", "Yes", "No internet service"])
+    Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+    PaperlessBilling = st.selectbox("PaperlessBilling", ["Yes", "No"])
+    PaymentMethod = st.selectbox("PaymentMethod", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
+    MonthlyCharges = st.number_input("MonthlyCharges", value=100.0)
+    TotalCharges = st.number_input("TotalCharges", value=100.0)
 
 # 4. Logika Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # Kita buat DataFrame dengan 19 kolom ASLI (Bukan 45 kolom manual)
-        # Karena Pipeline kamu akan melakukan scaling dan encoding sendiri secara otomatis!
-        input_data = pd.DataFrame({
-            'gender': [gender],
-            'SeniorCitizen': [senior],
-            'Partner': [partner],
-            'Dependents': [dependents],
-            'tenure': [tenure],
-            'PhoneService': ["Yes"], # Default
-            'MultipleLines': ["No"], # Default
-            'InternetService': [internet],
-            'OnlineSecurity': [security],
-            'OnlineBackup': ["No"], # Default
-            'DeviceProtection': ["No"], # Default
-            'TechSupport': [tech_support],
-            'StreamingTV': ["No"], # Default
-            'StreamingMovies': ["No"], # Default
-            'Contract': [contract],
-            'PaperlessBilling': [billing],
-            'PaymentMethod': ["Electronic check"], # Default
-            'MonthlyCharges': [monthly],
-            'TotalCharges': [total]
-        })
+        # MEMBUAT DATAFRAME DENGAN URUTAN KOLOM YANG BENAR
+        # Urutan ini harus sama dengan df_clean.drop(['Churn', 'customerID'], axis=1)
+        input_dict = {
+            'gender': gender,
+            'SeniorCitizen': SeniorCitizen,
+            'Partner': Partner,
+            'Dependents': Dependents,
+            'tenure': tenure,
+            'PhoneService': PhoneService,
+            'MultipleLines': MultipleLines,
+            'InternetService': InternetService,
+            'OnlineSecurity': OnlineSecurity,
+            'OnlineBackup': OnlineBackup,
+            'DeviceProtection': DeviceProtection,
+            'TechSupport': TechSupport,
+            'StreamingTV': StreamingTV,
+            'StreamingMovies': StreamingMovies,
+            'Contract': Contract,
+            'PaperlessBilling': PaperlessBilling,
+            'PaymentMethod': PaymentMethod,
+            'MonthlyCharges': MonthlyCharges,
+            'TotalCharges': TotalCharges
+        }
+        
+        input_df = pd.DataFrame([input_dict])
 
-        # Prediksi langsung menggunakan pipeline (model akan preprocess sendiri)
-        prediction = model.predict(input_data)
+        # Prediksi menggunakan Pipeline (Pipeline otomatis handle Scaling & OneHot)
+        prediction = model.predict(input_df)
         
         st.divider()
-        st.subheader("🔍 Hasil Prediksi:")
-        
-        # Sesuai target di notebook kamu (Churn: Yes/No)
         if prediction[0] == 'Yes' or prediction[0] == 1:
-            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
-            st.write("Alasan Teknis: Kontrak bulanan dan layanan Fiber Optic tanpa keamanan tambahan meningkatkan risiko pindah provider.")
+            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN")
         else:
-            st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
-            st.write("Alasan Teknis: Profil ini menunjukkan loyalitas yang stabil.")
+            st.success("✅ HASIL: Pelanggan diprediksi akan STAY")
             
     except Exception as e:
         st.error(f"Terjadi kesalahan: {e}")
-        st.info("Pastikan model yang diupload adalah 'best_rf_model' atau pipeline yang sudah terlatih.")
+        st.info("Saran: Pastikan urutan fitur di input_df sama dengan saat training di notebook.")
 
 st.divider()
-st.caption("Aplikasi Prediksi Churn - Bengkel Koding UAS")
+st.caption("A11.2022.14816 - Marshanda Putri Salsabila")
