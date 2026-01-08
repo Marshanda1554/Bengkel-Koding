@@ -3,27 +3,34 @@ import pandas as pd
 import dill
 import os
 
-# 1. Konfigurasi Halaman
+# 1. Judul & Konfigurasi
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 st.title("📊 Telco Customer Churn Prediction")
-st.write("Aplikasi Prediksi Churn - A11.2022.14816 - Marshanda Putri Salsabila")
+st.write("A11.2022.14816 - Marshanda Putri Salsabila")
 
-# 2. Load Model Menggunakan DILL (Wajib untuk model Pipeline kamu)
+# 2. Load Model Menggunakan DILL
 model_path = 'model_churn_rf.pkl'
-if os.path.exists(model_path):
-    try:
+
+@st.cache_resource # Agar model tidak di-load berulang-ulang setiap klik
+def load_model():
+    if os.path.exists(model_path):
         with open(model_path, 'rb') as f:
-            model = dill.load(f)
+            return dill.load(f)
+    return None
+
+try:
+    model = load_model()
+    if model is not None:
         st.success("✅ Model Pipeline Berhasil Dimuat!")
-    except Exception as e:
-        st.error(f"❌ Gagal memuat model: {e}")
-        st.info("Saran: Pastikan file 'model_churn_rf.pkl' sudah diupload ke GitHub.")
+    else:
+        st.error(f"⚠️ File '{model_path}' tidak ditemukan di GitHub.")
         st.stop()
-else:
-    st.error(f"⚠️ File '{model_path}' tidak ditemukan di repositori.")
+except Exception as e:
+    st.error(f"❌ Gagal memuat model: {e}")
+    st.warning("Tips: Jika error 'STACK_GLOBAL' muncul, hapus aplikasi di Streamlit Cloud lalu 'New App' kembali agar library terupdate.")
     st.stop()
 
-# 3. Form Input Data (Urutan 19 Kolom sesuai Dataset Asli)
+# 3. Form Input Data (Urutan Sesuai Dataset Asli)
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
 col1, col2, col3 = st.columns(3)
@@ -53,34 +60,22 @@ with col3:
     MonthlyCharges = st.number_input("Monthly Charges ($)", value=70.0)
     TotalCharges = st.number_input("Total Charges ($)", value=70.0)
 
-# 4. Tombol Prediksi
+# 4. Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # Menyiapkan data untuk dikirim ke model (Urutan Kritis!)
-        input_data = pd.DataFrame([{
-            'gender': gender,
-            'SeniorCitizen': SeniorCitizen,
-            'Partner': Partner,
-            'Dependents': Dependents,
-            'tenure': tenure,
-            'PhoneService': PhoneService,
-            'MultipleLines': MultipleLines,
-            'InternetService': InternetService,
-            'OnlineSecurity': OnlineSecurity,
-            'OnlineBackup': OnlineBackup,
-            'DeviceProtection': DeviceProtection,
-            'TechSupport': TechSupport,
-            'StreamingTV': StreamingTV,
-            'StreamingMovies': StreamingMovies,
-            'Contract': Contract,
-            'PaperlessBilling': PaperlessBilling,
-            'PaymentMethod': PaymentMethod,
-            'MonthlyCharges': MonthlyCharges,
+        input_df = pd.DataFrame([{
+            'gender': gender, 'SeniorCitizen': SeniorCitizen, 'Partner': Partner,
+            'Dependents': Dependents, 'tenure': tenure, 'PhoneService': PhoneService,
+            'MultipleLines': MultipleLines, 'InternetService': InternetService,
+            'OnlineSecurity': OnlineSecurity, 'OnlineBackup': OnlineBackup,
+            'DeviceProtection': DeviceProtection, 'TechSupport': TechSupport,
+            'StreamingTV': StreamingTV, 'StreamingMovies': StreamingMovies,
+            'Contract': Contract, 'PaperlessBilling': PaperlessBilling,
+            'PaymentMethod': PaymentMethod, 'MonthlyCharges': MonthlyCharges,
             'TotalCharges': TotalCharges
         }])
 
-        # Model akan otomatis melakukan Preprocessing (Scaling & Encoding)
-        prediction = model.predict(input_data)
+        prediction = model.predict(input_df)
         
         st.divider()
         if prediction[0] == 'Yes' or prediction[0] == 1:
@@ -90,7 +85,3 @@ if st.button("🚀 Prediksi Sekarang"):
             
     except Exception as e:
         st.error(f"Kesalahan Prediksi: {e}")
-        st.info("Pesan ini muncul jika urutan data input tidak sesuai dengan Pipeline model.")
-
-st.divider()
-st.caption("Aplikasi Prediksi Churn - Tugas UAS 2026")
