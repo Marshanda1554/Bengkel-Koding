@@ -25,7 +25,7 @@ else:
     st.error("⚠️ Model tidak ditemukan. Pastikan 'model_churn_rf.pkl' ada di GitHub.")
     st.stop()
 
-# 3. Form Input (Urutan ini SANGAT KRUSIAL)
+# 3. Form Input (Urutan ini harus 100% sama dengan urutan kolom di X_train)
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
 col1, col2, col3 = st.columns(3)
@@ -36,17 +36,17 @@ with col1:
     Partner = st.selectbox("Partner", ["Yes", "No"])
     Dependents = st.selectbox("Dependents", ["No", "Yes"])
     tenure = st.number_input("tenure", min_value=0, value=1)
+    PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
 
 with col2:
-    PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
     MultipleLines = st.selectbox("MultipleLines", ["No phone service", "No", "Yes"])
     InternetService = st.selectbox("InternetService", ["DSL", "Fiber optic", "No"])
     OnlineSecurity = st.selectbox("OnlineSecurity", ["No", "Yes", "No internet service"])
     OnlineBackup = st.selectbox("OnlineBackup", ["Yes", "No", "No internet service"])
     DeviceProtection = st.selectbox("DeviceProtection", ["No", "Yes", "No internet service"])
+    TechSupport = st.selectbox("TechSupport", ["No", "Yes", "No internet service"])
 
 with col3:
-    TechSupport = st.selectbox("TechSupport", ["No", "Yes", "No internet service"])
     StreamingTV = st.selectbox("StreamingTV", ["No", "Yes", "No internet service"])
     StreamingMovies = st.selectbox("StreamingMovies", ["No", "Yes", "No internet service"])
     Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
@@ -58,30 +58,31 @@ with col3:
 # 4. Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # MEMBUAT DATAFRAME DENGAN URUTAN YANG HARUS PERSIS SAMA DENGAN X_TRAIN
-        input_data = pd.DataFrame({
-            'gender': [gender],
-            'SeniorCitizen': [SeniorCitizen],
-            'Partner': [Partner],
-            'Dependents': [Dependents],
-            'tenure': [tenure],
-            'PhoneService': [PhoneService],
-            'MultipleLines': [MultipleLines],
-            'InternetService': [InternetService],
-            'OnlineSecurity': [OnlineSecurity],
-            'OnlineBackup': [OnlineBackup],
-            'DeviceProtection': [DeviceProtection],
-            'TechSupport': [TechSupport],
-            'StreamingTV': [StreamingTV],
-            'StreamingMovies': [StreamingMovies],
-            'Contract': [Contract],
-            'PaperlessBilling': [PaperlessBilling],
-            'PaymentMethod': [PaymentMethod],
-            'MonthlyCharges': [MonthlyCharges],
-            'TotalCharges': [TotalCharges]
-        })
+        # DATA DIBAWAH INI HARUS SESUAI URUTAN FITUR ASLI
+        # Berdasarkan dataset Telco: gender, SeniorCitizen, Partner, Dependents, tenure...
+        input_data = pd.DataFrame([{
+            'gender': gender,
+            'SeniorCitizen': SeniorCitizen,
+            'Partner': Partner,
+            'Dependents': Dependents,
+            'tenure': tenure,
+            'PhoneService': PhoneService,
+            'MultipleLines': MultipleLines,
+            'InternetService': InternetService,
+            'OnlineSecurity': OnlineSecurity,
+            'OnlineBackup': OnlineBackup,
+            'DeviceProtection': DeviceProtection,
+            'TechSupport': TechSupport,
+            'StreamingTV': StreamingTV,
+            'StreamingMovies': StreamingMovies,
+            'Contract': Contract,
+            'PaperlessBilling': PaperlessBilling,
+            'PaymentMethod': PaymentMethod,
+            'MonthlyCharges': MonthlyCharges,
+            'TotalCharges': TotalCharges
+        }])
 
-        # Prediksi menggunakan Pipeline (otomatis mengarahkan ke Scaler atau Encoder)
+        # Pipeline akan mengarahkan kolom numerik ke Scaler dan kategorikal ke OneHot secara otomatis
         prediction = model.predict(input_data)
         
         st.divider()
@@ -92,4 +93,3 @@ if st.button("🚀 Prediksi Sekarang"):
             
     except Exception as e:
         st.error(f"Kesalahan: {e}")
-        st.info("Pesan ini muncul karena model mengharapkan input dengan urutan kolom yang spesifik.")
