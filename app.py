@@ -1,82 +1,96 @@
 import streamlit as st
 import pandas as pd
-import pickle
+import dill
 import os
 
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 st.title("📊 Telco Customer Churn Prediction")
+st.write("Aplikasi Prediksi Churn - A11.2022.14816 - Marshanda Putri Salsabila")
 
-# 2. Load Model menggunakan Pickle Standar
+# 2. Load Model Menggunakan DILL (Wajib untuk model Pipeline kamu)
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
         with open(model_path, 'rb') as f:
-            model = pickle.load(f)
-        st.success("✅ Model Berhasil Dimuat!")
+            model = dill.load(f)
+        st.success("✅ Model Pipeline Berhasil Dimuat!")
     except Exception as e:
         st.error(f"❌ Gagal memuat model: {e}")
+        st.info("Saran: Pastikan file 'model_churn_rf.pkl' sudah diupload ke GitHub.")
         st.stop()
 else:
-    st.error(f"⚠️ File '{model_path}' tidak ditemukan.")
+    st.error(f"⚠️ File '{model_path}' tidak ditemukan di repositori.")
     st.stop()
 
-# 3. Form Input (Urutan harus persis sesuai dataset training)
+# 3. Form Input Data (Urutan 19 Kolom sesuai Dataset Asli)
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
-
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    gender = st.selectbox("gender", ["Female", "Male"])
-    SeniorCitizen = st.selectbox("SeniorCitizen", [0, 1])
+    gender = st.selectbox("Gender", ["Female", "Male"])
+    SeniorCitizen = st.selectbox("Senior Citizen", [0, 1])
     Partner = st.selectbox("Partner", ["Yes", "No"])
     Dependents = st.selectbox("Dependents", ["No", "Yes"])
-    tenure = st.number_input("tenure", min_value=0, max_value=100, value=1)
+    tenure = st.number_input("Tenure (Bulan)", min_value=0, value=1)
 
 with col2:
-    PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
-    MultipleLines = st.selectbox("MultipleLines", ["No phone service", "No", "Yes"])
-    InternetService = st.selectbox("InternetService", ["DSL", "Fiber optic", "No"])
-    OnlineSecurity = st.selectbox("OnlineSecurity", ["No", "Yes", "No internet service"])
-    OnlineBackup = st.selectbox("OnlineBackup", ["Yes", "No", "No internet service"])
-    DeviceProtection = st.selectbox("DeviceProtection", ["No", "Yes", "No internet service"])
+    PhoneService = st.selectbox("Phone Service", ["No", "Yes"])
+    MultipleLines = st.selectbox("Multiple Lines", ["No phone service", "No", "Yes"])
+    InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+    OnlineSecurity = st.selectbox("Online Security", ["No", "Yes", "No internet service"])
+    OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+    DeviceProtection = st.selectbox("Device Protection", ["No", "Yes", "No internet service"])
 
 with col3:
-    TechSupport = st.selectbox("TechSupport", ["No", "Yes", "No internet service"])
-    StreamingTV = st.selectbox("StreamingTV", ["No", "Yes", "No internet service"])
-    StreamingMovies = st.selectbox("StreamingMovies", ["No", "Yes", "No internet service"])
+    TechSupport = st.selectbox("Tech Support", ["No", "Yes", "No internet service"])
+    StreamingTV = st.selectbox("Streaming TV", ["No", "Yes", "No internet service"])
+    StreamingMovies = st.selectbox("Streaming Movies", ["No", "Yes", "No internet service"])
     Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-    PaperlessBilling = st.selectbox("PaperlessBilling", ["Yes", "No"])
-    PaymentMethod = st.selectbox("PaymentMethod", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
-    MonthlyCharges = st.number_input("MonthlyCharges", value=70.0)
-    TotalCharges = st.number_input("TotalCharges", value=70.0)
+    PaperlessBilling = st.selectbox("Paperless Billing", ["Yes", "No"])
+    PaymentMethod = st.selectbox("Payment Method", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
+    MonthlyCharges = st.number_input("Monthly Charges ($)", value=70.0)
+    TotalCharges = st.number_input("Total Charges ($)", value=70.0)
 
-# 4. Prediksi
+# 4. Tombol Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # Menyesuaikan input ke DataFrame
-        input_dict = {
-            'gender': gender, 'SeniorCitizen': SeniorCitizen, 'Partner': Partner,
-            'Dependents': Dependents, 'tenure': tenure, 'PhoneService': PhoneService,
-            'MultipleLines': MultipleLines, 'InternetService': InternetService,
-            'OnlineSecurity': OnlineSecurity, 'OnlineBackup': OnlineBackup,
-            'DeviceProtection': DeviceProtection, 'TechSupport': TechSupport,
-            'StreamingTV': StreamingTV, 'StreamingMovies': StreamingMovies,
-            'Contract': Contract, 'PaperlessBilling': PaperlessBilling,
-            'PaymentMethod': PaymentMethod, 'MonthlyCharges': MonthlyCharges,
+        # Menyiapkan data untuk dikirim ke model (Urutan Kritis!)
+        input_data = pd.DataFrame([{
+            'gender': gender,
+            'SeniorCitizen': SeniorCitizen,
+            'Partner': Partner,
+            'Dependents': Dependents,
+            'tenure': tenure,
+            'PhoneService': PhoneService,
+            'MultipleLines': MultipleLines,
+            'InternetService': InternetService,
+            'OnlineSecurity': OnlineSecurity,
+            'OnlineBackup': OnlineBackup,
+            'DeviceProtection': DeviceProtection,
+            'TechSupport': TechSupport,
+            'StreamingTV': StreamingTV,
+            'StreamingMovies': StreamingMovies,
+            'Contract': Contract,
+            'PaperlessBilling': PaperlessBilling,
+            'PaymentMethod': PaymentMethod,
+            'MonthlyCharges': MonthlyCharges,
             'TotalCharges': TotalCharges
-        }
-        input_df = pd.DataFrame([input_dict])
+        }])
 
-        prediction = model.predict(input_df)
+        # Model akan otomatis melakukan Preprocessing (Scaling & Encoding)
+        prediction = model.predict(input_data)
         
         st.divider()
         if prediction[0] == 'Yes' or prediction[0] == 1:
-            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN")
+            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
         else:
-            st.success("✅ HASIL: Pelanggan diprediksi akan STAY")
+            st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
             
     except Exception as e:
         st.error(f"Kesalahan Prediksi: {e}")
-        
+        st.info("Pesan ini muncul jika urutan data input tidak sesuai dengan Pipeline model.")
+
+st.divider()
+st.caption("Aplikasi Prediksi Churn - Tugas UAS 2026")
