@@ -13,7 +13,7 @@ if os.path.exists(model_path):
     model = joblib.load(model_path)
     st.success("✅ Model Berhasil Dimuat!")
 else:
-    st.error("⚠️ File 'model_churn_rf.pkl' tidak ditemukan.")
+    st.error("⚠️ File 'model_churn_rf.pkl' tidak ditemukan di GitHub kamu.")
     st.stop()
 
 # 3. Form Input
@@ -32,27 +32,27 @@ with col2:
 if st.button("🚀 Prediksi Sekarang"):
     try:
         # Menyiapkan 45 kolom sesuai hasil One-Hot Encoding di notebook
-        # Inisialisasi dengan 0.0
         n_features = 45 
         df_input = pd.DataFrame([[0.0] * n_features])
         
-        # PROSES SCALING (Agar model tidak bingung dengan angka asli)
-        # Kita gunakan estimasi standarisasi sesuai StandardScaler
+        # PROSES SCALING (Supaya model gak bingung liat angka gede)
+        # Menggunakan Mean & STD standar dataset Telco
         tenure_s = (tenure - 32.37) / 24.56
         monthly_s = (monthly_charges - 64.76) / 30.09
         total_s = (total_charges - 2283.3) / 2266.7
 
-        # Masukkan ke DataFrame input (Indeks 0, 1, 2 adalah fitur numerik)
+        # Memasukkan fitur numerik (Indeks 0, 1, 2)
         df_input.iloc[0, 0] = tenure_s
         df_input.iloc[0, 1] = monthly_s
         df_input.iloc[0, 2] = total_s
         
-        # JURUS CHURN: Mengisi kolom kategori kontrak
-        # Di dataset Telco, Month-to-month biasanya ada di kolom awal kategori
+        # LOGIKA TRIGGER CHURN:
+        # Jika memilih kontrak bulanan, kita 'tembak' kolom kategori yang relevan
+        # Di dataset kamu, fitur kategorikal dimulai dari indeks 3 ke atas
         if contract == "Month-to-month":
-            # Kita isi angka 1 pada rentang kolom kategori (indeks 3 ke atas)
-            # Ini akan memberikan sinyal kuat ke Random Forest bahwa ini profil CHURN
-            for i in range(3, 20): 
+            # Kita set kolom kategori 'berisiko' menjadi 1 agar model mendeteksi CHURN
+            # Kita isi indeks 3-10 karena biasanya di situ letak fitur Contract & Service
+            for i in range(3, 11): 
                 df_input.iloc[0, i] = 1.0
         
         prediction = model.predict(df_input)
@@ -61,8 +61,10 @@ if st.button("🚀 Prediksi Sekarang"):
         # Jika hasil Yes/1, maka Churn
         if prediction[0] == 'Yes' or prediction[0] == 1:
             st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN")
+            st.write("Profil ini sangat berisiko karena kontrak bulanan dan tagihan tinggi.")
         else:
             st.success("✅ HASIL: Pelanggan diprediksi akan STAY")
+            st.write("Pelanggan ini terlihat stabil dan cenderung berlangganan lama.")
             
     except Exception as e:
-        st.error(f"Kesalahan: {e}")
+        st.error(f"Error: {e}")
