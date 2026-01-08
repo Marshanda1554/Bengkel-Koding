@@ -21,41 +21,45 @@ if model is None:
     st.error("⚠️ Model tidak ditemukan!")
     st.stop()
 
-# 2. Input Sederhana
+# 2. Input yang paling minimalis
 st.divider()
-tenure = st.number_input("Tenure (Bulan)", min_value=0, value=1)
-monthly = st.number_input("Monthly Charges ($)", value=70.0)
-total = st.number_input("Total Charges ($)", value=70.0)
-contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+col1, col2 = st.columns(2)
+with col1:
+    tenure = st.number_input("Tenure (Bulan)", min_value=0, value=1)
+    monthly = st.number_input("Monthly Charges ($)", value=70.0)
+    total = st.number_input("Total Charges ($)", value=70.0)
+with col2:
+    contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+    internet = st.selectbox("Internet Service", ["Fiber optic", "DSL", "No"])
 
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # KUNCI JAWABAN: Kita susun DataFrame dengan urutan yang berbeda
-        # Kita taruh angka di depan karena Scaler biasanya nunggu di kolom 0, 1, 2
-        input_data = pd.DataFrame({
-            'tenure': [tenure],
-            'MonthlyCharges': [monthly],
-            'TotalCharges': [total],
-            'gender': ['Male'],
-            'SeniorCitizen': [0],
-            'Partner': ['No'],
-            'Dependents': ['No'],
-            'PhoneService': ['Yes'],
-            'MultipleLines': ['No'],
-            'InternetService': ['Fiber optic'],
-            'OnlineSecurity': ['No'],
-            'OnlineBackup': ['No'],
-            'DeviceProtection': ['No'],
-            'TechSupport': ['No'],
-            'StreamingTV': ['No'],
-            'StreamingMovies': ['No'],
-            'Contract': [contract],
-            'PaperlessBilling': ['Yes'],
-            'PaymentMethod': ['Electronic check']
-        })
+        # KITA BUAT SEMUA KOLOM (19 KOLOM) 
+        # TAPI KITA MASUKKAN KE LIST AGAR URUTANNYA KAKU
+        # Urutan: numerik dulu baru kategorikal (Ini standar Pipeline Scikit-Learn)
+        
+        data_numerik = [tenure, monthly, total, 0] # 0 itu untuk SeniorCitizen
+        data_kategorikal = [
+            'Male', 'No', 'No', 'Yes', 'No', internet, 'No', 'No', 
+            'No', 'No', 'No', 'No', contract, 'Yes', 'Electronic check'
+        ]
+        
+        # Gabungkan semua (Total 19 fitur)
+        full_data = data_numerik + data_kategorikal
+        
+        # Buat DataFrame dengan nama kolom standar dataset Telco
+        kolom = [
+            'tenure', 'MonthlyCharges', 'TotalCharges', 'SeniorCitizen',
+            'gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines',
+            'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
+            'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract',
+            'PaperlessBilling', 'PaymentMethod'
+        ]
+        
+        input_df = pd.DataFrame([full_data], columns=kolom)
 
-        # Coba prediksi
-        prediction = model.predict(input_data)
+        # Prediksi
+        prediction = model.predict(input_df)
         
         st.divider()
         if prediction[0] == 'Yes' or prediction[0] == 1:
@@ -64,12 +68,5 @@ if st.button("🚀 Prediksi Sekarang"):
             st.success("✅ HASIL: STAY")
             
     except Exception as e:
-        # Jika masih error, kita coba balik urutannya otomatis di sini
-        try:
-            # Versi cadangan: Geser angka ke paling belakang
-            cols = list(input_data.columns)
-            input_data_v2 = input_data[cols[3:] + cols[:3]]
-            prediction = model.predict(input_data_v2)
-            st.write("Hasil (v2): " + str(prediction[0]))
-        except:
-            st.error(f"Model kamu minta urutan khusus. Error: {e}")
+        st.error(f"Urutan Model masih bentrok. Pesan: {e}")
+        st.info("Tips: Saat presentasi, fokus pada EDA di Notebook jika web ini masih terkendala metadata.")
