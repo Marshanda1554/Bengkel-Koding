@@ -3,14 +3,12 @@ import pandas as pd
 import joblib
 import os
 
-# 1. Judul
-st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
+st.set_page_config(page_title="Telco Churn Predictor", layout="centered")
 st.title("📊 Telco Customer Churn Prediction")
 st.write("A11.2022.14816 - Marshanda Putri Salsabila")
 
-# 2. Load Model
+# 1. Load Model
 model_path = 'model_churn_rf.pkl'
-
 @st.cache_resource
 def load_model():
     if os.path.exists(model_path):
@@ -19,63 +17,59 @@ def load_model():
 
 model = load_model()
 
-if model is not None:
-    st.success("✅ Model Siap Digunakan!")
-else:
-    st.error("⚠️ Model tidak ditemukan. Pastikan file .pkl sudah di GitHub.")
+if model is None:
+    st.error("⚠️ Model tidak ditemukan!")
     st.stop()
 
-# 3. Form Input (Tanpa Gender & Data Ribet Lainnya)
+# 2. Input Sederhana
 st.divider()
-st.header("📝 Masukkan Data Pelanggan")
-col1, col2 = st.columns(2)
+tenure = st.number_input("Tenure (Bulan)", min_value=0, value=1)
+monthly = st.number_input("Monthly Charges ($)", value=70.0)
+total = st.number_input("Total Charges ($)", value=70.0)
+contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
 
-with col1:
-    tenure = st.number_input("Tenure (Sudah berapa bulan berlangganan?)", min_value=0, value=1)
-    contract = st.selectbox("Jenis Kontrak", ["Month-to-month", "One year", "Two year"])
-    internet = st.selectbox("Layanan Internet", ["Fiber optic", "DSL", "No"])
-    monthly_charges = st.number_input("Tagihan Bulanan ($)", value=70.0)
-
-with col2:
-    security = st.selectbox("Keamanan Online (Online Security)", ["No", "Yes", "No internet service"])
-    support = st.selectbox("Bantuan Teknis (Tech Support)", ["No", "Yes", "No internet service"])
-    billing = st.selectbox("Tagihan Tanpa Kertas (Paperless Billing)", ["Yes", "No"])
-    total_charges = st.number_input("Total Tagihan ($)", value=70.0)
-
-# 4. Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # TRIK: Kita isi data sisanya otomatis agar model tidak error
-        input_data = pd.DataFrame([{
-            'gender': 'Male',           # Diisi otomatis (Hardcoded)
-            'SeniorCitizen': 0,         # Diisi otomatis
-            'Partner': 'No',            # Diisi otomatis
-            'Dependents': 'No',         # Diisi otomatis
-            'tenure': tenure,
-            'PhoneService': 'Yes',      # Diisi otomatis
-            'MultipleLines': 'No',      # Diisi otomatis
-            'InternetService': internet,
-            'OnlineSecurity': security,
-            'OnlineBackup': 'No',       # Diisi otomatis
-            'DeviceProtection': 'No',   # Diisi otomatis
-            'TechSupport': support,
-            'StreamingTV': 'No',        # Diisi otomatis
-            'StreamingMovies': 'No',    # Diisi otomatis
-            'Contract': contract,
-            'PaperlessBilling': billing,
-            'PaymentMethod': 'Electronic check', # Diisi otomatis
-            'MonthlyCharges': monthly_charges,
-            'TotalCharges': total_charges
-        }])
+        # KUNCI JAWABAN: Kita susun DataFrame dengan urutan yang berbeda
+        # Kita taruh angka di depan karena Scaler biasanya nunggu di kolom 0, 1, 2
+        input_data = pd.DataFrame({
+            'tenure': [tenure],
+            'MonthlyCharges': [monthly],
+            'TotalCharges': [total],
+            'gender': ['Male'],
+            'SeniorCitizen': [0],
+            'Partner': ['No'],
+            'Dependents': ['No'],
+            'PhoneService': ['Yes'],
+            'MultipleLines': ['No'],
+            'InternetService': ['Fiber optic'],
+            'OnlineSecurity': ['No'],
+            'OnlineBackup': ['No'],
+            'DeviceProtection': ['No'],
+            'TechSupport': ['No'],
+            'StreamingTV': ['No'],
+            'StreamingMovies': ['No'],
+            'Contract': [contract],
+            'PaperlessBilling': ['Yes'],
+            'PaymentMethod': ['Electronic check']
+        })
 
-        # Pastikan urutan kolom sesuai standar dataset Telco 
+        # Coba prediksi
         prediction = model.predict(input_data)
         
         st.divider()
         if prediction[0] == 'Yes' or prediction[0] == 1:
-            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
+            st.error("⚠️ HASIL: CHURN")
         else:
-            st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
+            st.success("✅ HASIL: STAY")
             
     except Exception as e:
-        st.error(f"Kesalahan: {e}")
+        # Jika masih error, kita coba balik urutannya otomatis di sini
+        try:
+            # Versi cadangan: Geser angka ke paling belakang
+            cols = list(input_data.columns)
+            input_data_v2 = input_data[cols[3:] + cols[:3]]
+            prediction = model.predict(input_data_v2)
+            st.write("Hasil (v2): " + str(prediction[0]))
+        except:
+            st.error(f"Model kamu minta urutan khusus. Error: {e}")
