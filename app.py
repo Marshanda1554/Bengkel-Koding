@@ -1,36 +1,31 @@
 import streamlit as st
 import pandas as pd
-import dill
+import joblib
 import os
 
-# 1. Judul & Konfigurasi
+# 1. Konfigurasi
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 st.title("📊 Telco Customer Churn Prediction")
 st.write("A11.2022.14816 - Marshanda Putri Salsabila")
 
-# 2. Load Model Menggunakan DILL
+# 2. Load Model Menggunakan Joblib (Lebih Stabil)
 model_path = 'model_churn_rf.pkl'
 
-@st.cache_resource # Agar model tidak di-load berulang-ulang setiap klik
+@st.cache_resource
 def load_model():
     if os.path.exists(model_path):
-        with open(model_path, 'rb') as f:
-            return dill.load(f)
+        return joblib.load(model_path)
     return None
 
-try:
-    model = load_model()
-    if model is not None:
-        st.success("✅ Model Pipeline Berhasil Dimuat!")
-    else:
-        st.error(f"⚠️ File '{model_path}' tidak ditemukan di GitHub.")
-        st.stop()
-except Exception as e:
-    st.error(f"❌ Gagal memuat model: {e}")
-    st.warning("Tips: Jika error 'STACK_GLOBAL' muncul, hapus aplikasi di Streamlit Cloud lalu 'New App' kembali agar library terupdate.")
+model = load_model()
+
+if model is not None:
+    st.success("✅ Model Berhasil Dimuat!")
+else:
+    st.error("⚠️ Model tidak ditemukan di GitHub.")
     st.stop()
 
-# 3. Form Input Data (Urutan Sesuai Dataset Asli)
+# 3. Form Input
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
 col1, col2, col3 = st.columns(3)
@@ -84,4 +79,4 @@ if st.button("🚀 Prediksi Sekarang"):
             st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
             
     except Exception as e:
-        st.error(f"Kesalahan Prediksi: {e}")
+        st.error(f"Kesalahan: {e}")
