@@ -1,80 +1,72 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
 import os
 
-# 1. Judul & Konfigurasi Halaman
+# 1. Judul & Konfigurasi
 st.set_page_config(page_title="Telco Churn Predictor", layout="centered")
 st.title("📊 Telco Customer Churn Prediction")
-st.write("Aplikasi ini memprediksi apakah pelanggan akan berhenti (Churn) atau bertahan (Stay).")
+st.write("Prediksi apakah pelanggan akan berhenti (Churn) atau bertahan (Stay).")
 
 # 2. Load Model
 model_path = 'model_churn_rf.pkl'
 if os.path.exists(model_path):
     try:
         model = joblib.load(model_path)
-        st.success("✅ Model siap digunakan!")
+        st.success("✅ Model Berhasil Dimuat!")
     except Exception as e:
         st.error(f"Gagal memuat model: {e}")
         st.stop()
 else:
-    st.error("⚠️ File model 'model_churn_rf.pkl' tidak ditemukan. Pastikan sudah diupload ke GitHub.")
+    st.error("⚠️ File 'model_churn_rf.pkl' tidak ditemukan.")
     st.stop()
 
-# 3. Form Input Data
+# 3. Form Input
 st.divider()
-st.header("📝 Data Pelanggan")
 col1, col2 = st.columns(2)
 
 with col1:
-    tenure = st.number_input("Tenure (Bulan lamanya berlangganan)", min_value=1, max_value=72, value=1)
+    tenure = st.number_input("Tenure (Bulan)", min_value=1, max_value=72, value=1)
     monthly_charges = st.number_input("Monthly Charges ($)", min_value=18.0, max_value=120.0, value=100.0)
 
 with col2:
+    # --- INI TOTAL CHARGES NYA ---
     total_charges = st.number_input("Total Charges ($)", min_value=18.0, max_value=9000.0, value=100.0)
     contract = st.selectbox("Jenis Kontrak", ["Month-to-month", "One year", "Two year"])
 
 # 4. Logika Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # Model kamu meminta 45 fitur
+        # Menyiapkan 45 kolom sesuai hasil One-Hot Encoding di notebook
         n_features = 45 
         df_input = pd.DataFrame([[0.0] * n_features])
         
-        # PROSES SCALING MANUAL (Penting agar tidak 'Stay' terus)
-        # Sesuai StandardScaler di notebook kamu
+        # PROSES SCALING (Supaya hasilnya gak STAY terus)
+        # Menggunakan estimasi Mean & STD dari dataset Telco agar model mengenali angkanya
         tenure_s = (tenure - 32.37) / 24.56
         monthly_s = (monthly_charges - 64.76) / 30.09
-        total_s = (total_charges - 2283.3) / 2266.7
+        total_s = (total_charges - 2283.3) / 2266.7 # Scaling untuk Total Charges
 
-        # Memasukkan fitur numerik yang sudah di-scale ke indeks kolom 0, 1, 2
+        # Masukkan ke DataFrame input (Indeks 0, 1, 2 sesuai urutan fitur numerik)
         df_input.iloc[0, 0] = tenure_s
         df_input.iloc[0, 1] = monthly_s
         df_input.iloc[0, 2] = total_s
         
-        # Logika Encoding untuk Kontrak (Hot Encoding)
-        # Jika Month-to-month, kita aktifkan kolom kategori yang berisiko tinggi Churn
+        # Mengaktifkan trigger kategori agar bisa muncul CHURN
         if contract == "Month-to-month":
-            for i in range(5, 15): # Indeks kolom kategori hasil One-Hot
+            # Mengisi nilai 1 pada kolom kategori kontrak bulanan (One-Hot)
+            for i in range(5, 15): 
                 df_input.iloc[0, i] = 1.0
         
-        # Eksekusi Prediksi
         prediction = model.predict(df_input)
         
         st.divider()
-        st.subheader("🔍 Hasil Analisis:")
-        
-        # Menyesuaikan output label
         if prediction[0] == 'Yes' or prediction[0] == 1:
-            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN (Berhenti)")
-            st.write("Rekomendasi: Berikan promo khusus atau diskon paket untuk mencegah pelanggan berhenti.")
+            st.error("⚠️ HASIL: Pelanggan diprediksi akan CHURN")
         else:
-            st.success("✅ HASIL: Pelanggan diprediksi akan STAY (Bertahan)")
-            st.write("Rekomendasi: Teruskan layanan standar dan tawarkan program loyalitas jangka panjang.")
+            st.success("✅ HASIL: Pelanggan diprediksi akan STAY")
             
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat prediksi: {e}")
+        st.error(f"Kesalahan teknis: {e}")
 
-st.divider()
-st.caption("Aplikasi Prediksi Churn - Tugas Bengkel Koding 2026")
+st.caption("UAS Bengkel Koding 2026")
