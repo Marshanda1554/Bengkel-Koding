@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 import os
 
-# 1. Judul & Konfigurasi
+# 1. Judul
 st.set_page_config(page_title="Telco Churn Predictor", layout="wide")
 st.title("📊 Telco Customer Churn Prediction")
 st.write("A11.2022.14816 - Marshanda Putri Salsabila")
@@ -20,69 +20,55 @@ def load_model():
 model = load_model()
 
 if model is not None:
-    st.success("✅ Model Berhasil Dimuat!")
+    st.success("✅ Model Siap Digunakan!")
 else:
-    st.error("⚠️ Model tidak ditemukan. Pastikan 'model_churn_rf.pkl' ada di GitHub.")
+    st.error("⚠️ Model tidak ditemukan. Pastikan file .pkl sudah di GitHub.")
     st.stop()
 
-# 3. Form Input (Urutan ini harus 100% sama dengan urutan kolom di X_train)
+# 3. Form Input (Tanpa Gender & Data Ribet Lainnya)
 st.divider()
 st.header("📝 Masukkan Data Pelanggan")
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
-    gender = st.selectbox("gender", ["Female", "Male"])
-    SeniorCitizen = st.selectbox("SeniorCitizen", [0, 1])
-    Partner = st.selectbox("Partner", ["Yes", "No"])
-    Dependents = st.selectbox("Dependents", ["No", "Yes"])
-    tenure = st.number_input("tenure", min_value=0, value=1)
-    PhoneService = st.selectbox("PhoneService", ["No", "Yes"])
+    tenure = st.number_input("Tenure (Sudah berapa bulan berlangganan?)", min_value=0, value=1)
+    contract = st.selectbox("Jenis Kontrak", ["Month-to-month", "One year", "Two year"])
+    internet = st.selectbox("Layanan Internet", ["Fiber optic", "DSL", "No"])
+    monthly_charges = st.number_input("Tagihan Bulanan ($)", value=70.0)
 
 with col2:
-    MultipleLines = st.selectbox("MultipleLines", ["No phone service", "No", "Yes"])
-    InternetService = st.selectbox("InternetService", ["DSL", "Fiber optic", "No"])
-    OnlineSecurity = st.selectbox("OnlineSecurity", ["No", "Yes", "No internet service"])
-    OnlineBackup = st.selectbox("OnlineBackup", ["Yes", "No", "No internet service"])
-    DeviceProtection = st.selectbox("DeviceProtection", ["No", "Yes", "No internet service"])
-    TechSupport = st.selectbox("TechSupport", ["No", "Yes", "No internet service"])
-
-with col3:
-    StreamingTV = st.selectbox("StreamingTV", ["No", "Yes", "No internet service"])
-    StreamingMovies = st.selectbox("StreamingMovies", ["No", "Yes", "No internet service"])
-    Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-    PaperlessBilling = st.selectbox("PaperlessBilling", ["Yes", "No"])
-    PaymentMethod = st.selectbox("PaymentMethod", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
-    MonthlyCharges = st.number_input("MonthlyCharges", value=70.0)
-    TotalCharges = st.number_input("TotalCharges", value=70.0)
+    security = st.selectbox("Keamanan Online (Online Security)", ["No", "Yes", "No internet service"])
+    support = st.selectbox("Bantuan Teknis (Tech Support)", ["No", "Yes", "No internet service"])
+    billing = st.selectbox("Tagihan Tanpa Kertas (Paperless Billing)", ["Yes", "No"])
+    total_charges = st.number_input("Total Tagihan ($)", value=70.0)
 
 # 4. Prediksi
 if st.button("🚀 Prediksi Sekarang"):
     try:
-        # DATA DIBAWAH INI HARUS SESUAI URUTAN FITUR ASLI
-        # Berdasarkan dataset Telco: gender, SeniorCitizen, Partner, Dependents, tenure...
+        # TRIK: Kita isi data sisanya otomatis agar model tidak error
         input_data = pd.DataFrame([{
-            'gender': gender,
-            'SeniorCitizen': SeniorCitizen,
-            'Partner': Partner,
-            'Dependents': Dependents,
+            'gender': 'Male',           # Diisi otomatis (Hardcoded)
+            'SeniorCitizen': 0,         # Diisi otomatis
+            'Partner': 'No',            # Diisi otomatis
+            'Dependents': 'No',         # Diisi otomatis
             'tenure': tenure,
-            'PhoneService': PhoneService,
-            'MultipleLines': MultipleLines,
-            'InternetService': InternetService,
-            'OnlineSecurity': OnlineSecurity,
-            'OnlineBackup': OnlineBackup,
-            'DeviceProtection': DeviceProtection,
-            'TechSupport': TechSupport,
-            'StreamingTV': StreamingTV,
-            'StreamingMovies': StreamingMovies,
-            'Contract': Contract,
-            'PaperlessBilling': PaperlessBilling,
-            'PaymentMethod': PaymentMethod,
-            'MonthlyCharges': MonthlyCharges,
-            'TotalCharges': TotalCharges
+            'PhoneService': 'Yes',      # Diisi otomatis
+            'MultipleLines': 'No',      # Diisi otomatis
+            'InternetService': internet,
+            'OnlineSecurity': security,
+            'OnlineBackup': 'No',       # Diisi otomatis
+            'DeviceProtection': 'No',   # Diisi otomatis
+            'TechSupport': support,
+            'StreamingTV': 'No',        # Diisi otomatis
+            'StreamingMovies': 'No',    # Diisi otomatis
+            'Contract': contract,
+            'PaperlessBilling': billing,
+            'PaymentMethod': 'Electronic check', # Diisi otomatis
+            'MonthlyCharges': monthly_charges,
+            'TotalCharges': total_charges
         }])
 
-        # Pipeline akan mengarahkan kolom numerik ke Scaler dan kategorikal ke OneHot secara otomatis
+        # Pastikan urutan kolom sesuai standar dataset Telco 
         prediction = model.predict(input_data)
         
         st.divider()
